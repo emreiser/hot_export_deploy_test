@@ -1,0 +1,33 @@
+<% if !@e.nil? %>
+   <pre style="margin-top: 20px;"><%= @e.message %></pre>
+<% end %>
+
+<h1><%= t 'jobs.newjobconf.h1' %></h1>
+
+<div class="wizard">
+<%= form_tag({:action => :wizard_configuration_create}, :multipart => true) do %>
+<%= hidden_field_tag(:wizard, 'tagupload') %>
+<%= hidden_field_tag("job[name]", @job.name) %>
+<%= hidden_field_tag("job[description]", @job.description) %>
+<%= hidden_field_tag("job[lonmin]", @job.lonmin) %>
+<%= hidden_field_tag("job[latmin]", @job.latmin) %>
+<%= hidden_field_tag("job[lonmax]", @job.lonmax) %>
+<%= hidden_field_tag("job[latmax]", @job.latmax) %>
+<%= hidden_field_tag("job[region_id]", @job.region_id) %>
+<%= render 'shared/error_messages' %>
+<table class="wizard">
+<tr>
+   <th><%= t 'jobs.newjobconf.th.name' %></th>
+   <td><%= @job.name %></td>
+   <td></td>
+</tr>
+<tr>
+   <th><%= t 'jobs.newjobconf.th.default_tags' %></th>
+   <td><%= check_box_tag('uploads[default_tags]', true, true) %></td>
+   <td class="notice"><%= t 'jobs.newjobconf.notice.default_tags' %></td>
+</tr>
+</table>
+
+<%= submit_tag( t('jobs.button.save'), { :class => "submit" } ) %>
+<% end %>
+</div>

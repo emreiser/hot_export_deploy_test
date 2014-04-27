@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title><%= t 'tool' %> | <%= @title %></title>
+  <link href="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css" rel="stylesheet">
+  <link rel="shortcut icon" type="image/x-icon" href="<%= asset_path("layout/favicon.ico") %>">
+  <%= stylesheet_link_tag    "application" %>
+  <%= javascript_include_tag "application", "rails.validations" %>
+  <%= csrf_meta_tags %>
+</head>
+<body>
+<%= render 'layouts/header' %>
+<div id="content">
+   <% flash.each do |key, value| %>
+      <div class="flash <%= key %>"><%= value %></div>
+   <% end %>
+   <%= yield %>
+</div>
+<%= render 'layouts/footer' %>
+<%= debug(params) if Rails.env.development? %>
+</body>
+</html>

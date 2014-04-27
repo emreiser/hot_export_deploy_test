@@ -1,0 +1,39 @@
+<tr>
+
+<!-- state //-->
+<td>
+<img src="<%= asset_path "status/#{run.state}.png" %>" class="state" title="<%= run.state %>">
+</td>
+
+<!-- download //-->
+<td>
+<% if run.state == 'success' %>
+<ul>
+<% run.downloads.all.each do |dl| %>
+<li><a href="<%= dl.url %>"><%= dl.name %></a> <span class="size">[<%= dl.size %>]</span></li>
+<% end %>
+</ul>
+<% elsif run.state == 'new' or run.state == 'running' %>
+[<%= t 'jobs.runs.message.jobrunning' %>]
+<% elsif run.state == 'error' %>
+<%= run.comment %>
+<% else %>
+[<%= t 'jobs.runs.message.nodownload' %>]
+<% end %>
+</td>
+
+<!-- created_at //-->
+<td><%= run.updated_at.strftime("%Y-%m-%d %H:%M") %></td>
+
+<!-- created_by //-->
+<% if current_user.try(:admin?) %>
+   <td>
+   <% if run.try(:user) %>
+      <%= run.user.email %>
+   <% else %>
+      <%= t 'jobs.runs.message.no_created_by' %>
+   <% end %>
+   </td>
+<% end %>
+</tr>
+

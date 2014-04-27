@@ -1,0 +1,56 @@
+<script type="text/javascript">
+   
+$.fn.toggleClick = function() {
+   var events = arguments;
+   var iteration = 0;
+   
+   return $(this).click( function() {
+      events[iteration].apply(this, arguments);
+      iteration = (iteration + 1) % events.length;
+   });
+};
+
+$(document).ready(function() {
+
+   <% if @hide_invisible == true %>
+      hide_invisible();
+   <% else %>
+      show_invisible();
+   <% end %>
+
+   $(".jq_show").toggleClick(function(){
+      show_invisible();
+   }, function() {
+      hide_invisible();
+   });
+
+
+   function show_invisible() {
+      //$(".jq_invisible").parent().parent().show();   
+      $(".invisible").show();   
+      $("#showhide").text("<%= t 'uploads.span.hide' %>");
+      counttr();
+   }
+
+   function hide_invisible() {
+      //$(".jq_invisible").parent().parent().hide();   
+      $(".invisible").hide();   
+      $("#showhide").text("<%= t 'uploads.span.show' %>");
+      counttr();
+   }
+
+   function counttr() {
+      c2 = $("table.upindex tr:visible").length
+
+      if (c2 == '1') {
+         $("table.upindex").hide();
+         $("p.message").html("<tr><td colspan='7'><%= t 'uploads.message.nofiles' %></td></tr>");   
+      } else {
+         $("table.upindex").show();
+         $("p.message").empty();
+      }
+      return c2;
+   }
+
+});
+</script>

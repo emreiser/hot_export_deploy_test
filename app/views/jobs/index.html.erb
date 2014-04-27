@@ -1,0 +1,69 @@
+<script type="text/javascript">
+
+$(document).ready(function(){
+
+   $("#jobfilter").bind("keyup", function() {
+
+      filtertxt = $(this).val();
+      // $("#jobfilter").attr({value: filtertxt});
+      var tr = $("tr.jobfilter");
+
+      if (filtertxt == "") {
+         tr.show();
+      } else {
+         tr.hide();
+         tr.filter(":contains(" + filtertxt + ")").show();
+      }
+   });
+
+});
+
+</script>
+<h1><%= t 'jobs.h1' %></h1>
+
+<% if @jobs.count == 0 %>
+<p><%= t 'jobs.nojobs' %></p>
+<% else %>
+<p><%= t 'jobs.filter' %> <input type="text" size=10 id="jobfilter"></p>
+
+<%= will_paginate %>
+<table class="jobindex">
+   <tr>
+   <th width="400"><%= t 'jobs.th.name' %></th>
+   <th width="220"><%= t 'jobs.th.region' %></th>
+   <th width="220"><%= t 'jobs.th.created_at' %></th>
+   <% if current_user.try(:admin?) %>
+      <th width="220"><%= t 'jobs.th.created_by' %></th>
+   <% end %>
+   <th width="220"><%= t 'jobs.th.based_preset' %></th>
+   <% if user_signed_in? %>
+      <th><%= t 'jobs.th.delete' %></th>
+   <% end %>
+   </tr>
+   <%= render @jobs %>
+</table>
+<%= will_paginate %>
+<% end %>
+<ul class="upload_actions">
+<!-- Show deleted //-->
+<li>
+<img src="<%= asset_path 'view.png' %>">
+<% if @hide_invisible == true %>
+<%= link_to t('jobs.action.show_deleted'), jobs_path(:notowner => params['notowner'], :deleted => 'y') %>
+<% else %>
+<%= link_to t('jobs.action.hide_deleted'), jobs_path(:notowner => params['notowner']) %>
+<% end %>
+</li>
+
+<% if user_signed_in? %>
+<li>
+<img src="<%= asset_path 'view.png' %>">
+<% if @hide_notowner == true %>
+<%= link_to t('jobs.action.show_notowner'), jobs_path(:notowner => 'y', :deleted => params['deleted']) %>
+<% else %>
+<%= link_to t('jobs.action.hide_notowner'), jobs_path(:deleted => params['deleted']) %>
+<% end %>
+</li>
+<% end %>
+
+</ul>

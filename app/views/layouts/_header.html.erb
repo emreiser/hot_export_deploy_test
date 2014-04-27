@@ -1,0 +1,39 @@
+<div id="header" style="background-image: url(<%= asset_path 'layout/red-header.png' %>);">
+   <div class="nav">
+      <ul>
+         <li><%= link_to t('navigation.home'), root_path %></li>
+         <li><%= link_to t('navigation.help'), help_path %></li>
+         <li><%= link_to t('navigation.jobs'), jobs_path %></li>
+
+         <% if user_signed_in? %>
+         <li><%= link_to t('navigation.newjob'), wizard_area_path %></li>
+         <% else %>
+         <li><span class="inactive" title="<%= t 'navigation.newjob_hint' %>"><%= t 'navigation.newjob' %></span></li>
+         <% end %>
+
+
+      </ul>
+   </div>
+   <div class="logo">
+      <img src="<%= asset_path 'layout/hot_logo_white.png' %>" class="logo">
+      <h1>HOT Exports</h1>
+   </div>
+</div>
+
+<div id="switch_language" style="float: right;">
+<% unless (params[:controller] == "jobs" and params[:action] == "wizard_configuration") %>
+<p>
+<%= link_to_unless I18n.locale == :id, "Bahasa Indonesia", :locale => :id %>
+|
+<%= link_to_unless I18n.locale == :de, "Deutsch", :locale => :de %>
+|
+<%= link_to_unless I18n.locale == :en, "English", :locale => :en %>
+|
+<%= link_to_unless I18n.locale == :es, "Español", :locale => :es %>
+|
+<%= link_to_unless I18n.locale == :fr, "Français", :locale => :fr %>
+|
+<%= link_to_unless I18n.locale == :ja, "日本語", :locale => :ja %>
+</p>
+<% end %>
+</div>

@@ -1,0 +1,530 @@
+/* set all distances to zero */
+
+body, div, span, h1, h2, h3, h4, h5, h6, ol, ul, li, fieldset, legend, p, i, b, em, pre, code, img {
+   padding: 0px;
+   margin: 0px;
+   border: 0px;
+}
+table, thead, tbody, tr, th, td {
+   padding: 0px;
+   margin: 0px;
+   border: 0px;
+}
+form, input, select, option {
+   padding: 0px;
+   margin: 0px;
+}
+
+a img {
+   border: 0px;
+}
+
+/* colors
+
+*/
+
+
+/* body */
+body {
+   font-family: sans-serif;
+   background-color: #FFF;
+}
+
+/* generel styles */
+.round {
+   -moz-border-radius: 10px;
+   -webkit-border-radius: 10px;
+   border-radius: 10px;
+}
+
+.marker {
+   background-color: #90E3FF;
+}
+
+/* default styles */
+
+h1 {
+   color: #234;
+   font-size: 1.7em;
+   font-weight: normal;
+   margin: 20px 0px 10px 0px;
+}
+
+h2 {
+   color: #234;
+   font-size: 1.2em;
+   font-weight: bold;
+   margin: 20px 0px 10px 0px;
+}
+
+h3, h4, h5, h6 {
+   color: #888;
+   margin: 10px 0px 5px 0px;
+}
+
+p, ul, td, th {
+   font-size: .85em;
+}
+
+p {
+   margin: 5px 0px;
+}
+
+a {
+   color: #920902;
+   text-decoration: none;
+}
+
+a:hover {
+   text-decoration: underline;
+}
+
+/*
+table {
+   width: 100%;
+   margin-top: 10px;
+   empty-cells: show;
+   border-collapse: collapse;
+   border: 1px solid #aaa;
+}
+
+
+table th, table td {
+   padding: 3px 10px;
+   vertical-align: top;
+   border: 1px solid #fff;
+}
+
+table th {
+   background-color: #88bbcc;
+   color: #fff;
+}
+
+table tr:nth-child(1n+2) {
+   background-color: #F4F4F4;
+}
+
+table tr, table tr:nth-child(2n+3) {
+   background-color: #F1F4F5;
+}
+
+table tr:hover {
+}
+*/
+
+
+ul {
+   list-style-type: none;
+   margin: 5px 0px;
+}
+
+/* buttons */
+input[type=submit], input[type=button] {
+   margin-top: 20px;
+   padding: 1px 12px;
+   font-size: 12px;
+   color: #950B04;
+   font-weight: normal;
+}
+
+textarea {
+   height: 120px;
+}
+
+option {
+   width: 180px;
+   background-color: #fefefe;
+}
+
+li {
+   line-height: 1.5;
+}
+
+/* uploads index */
+table.upindex {
+   margin-top: 20px;
+   background-color: #efefef;
+   border-collapse: collapse;
+}
+
+table.upindex tr.invisible {
+   background-color: #dedede;
+}
+
+table.upindex th, table.upindex td {
+   text-align: left;
+   padding: 3px;
+   border: 1px solid #ccc;
+   font-size: 0.8em;
+}
+
+table.upindex td.delicon {
+   text-align: center;
+}
+
+ul.upload_actions {
+   margin: 50px 0px;
+}
+
+ul.account_actions {
+   margin: 10px 0px;
+}
+
+
+table.account_create th {
+   text-align: left;
+   width: 200px;
+}
+
+
+/* checktags */
+table.checktags {
+   margin-top: 20px;
+   border-collapse: collapse;
+   background-color: #efefef;
+}
+
+table.checktags td, table.checktags th {
+   padding: 3px 7px;
+   font-size: small;
+}
+
+table.checktags tr:nth-of-type(odd) {
+     background-color:#cdcdcd;
+}
+
+/* jobindex */
+table.jobindex {
+   margin-top: 20px;
+   background-color: #e0e0e0;
+   border-collapse: collapse;
+}
+
+table.jobindex th, table.jobindex td {
+   text-align: left;
+   padding: 3px;
+   border: 1px solid #ccc;
+   font-size: 0.8em;
+}
+
+table.jobindex tr:nth-child(1n+2) {
+   background-color: #efefef;
+}
+
+table.jobindex tr:nth-child(2n+3) {
+   background-color: #e0e0e0;
+}
+
+table.jobindex tr.invisible {
+   background-color: #DECCCC;
+}
+
+
+table.jobindex td.delicon {
+   text-align: center;
+}
+
+span.size {
+   color: #aaa;
+}
+
+
+/* jobaction */
+table.jobaction td {
+   vertical-align: bottom;
+}
+
+
+/* wizard */
+div.wizard {
+   float: left;
+   margin: 10px 0px;
+   padding: 0px;
+   padding-right: 20px;
+}
+
+.wizard label {
+   display: block;
+   font-weight: bold;
+   margin-bottom: 5px;
+}
+
+.wizard select {
+  margin-bottom: 10px;
+}
+
+p.wizard {
+   margin: 20px 0px;
+}
+
+table.wizard {
+   margin: 40px 0px;
+}
+
+table.wizard th, table.wizard td {
+   padding: 5px;
+   border: 0px none #fff;
+}
+
+table.wizard th {
+   text-align: right;
+   vertical-align: top;
+   width: 200px;
+   background-color: #FFF;
+   color: #2f2f2f;
+}
+
+table.wizard td.notice {
+   font-style: italic;
+   font-size: 0.8em;
+}
+
+table.wizard input, table.wizard textarea {
+   width: 450px;
+}
+
+table.wizard textarea {
+   height: 4em;
+}
+
+table.wizard label {
+   margin-left: 10px;
+}
+
+table.wizard input.submit,
+input.submit {
+   width: 150px;
+   margin-bottom:50px;
+   font-size:1.1em;
+   font-weight:bold;
+}
+
+#map {
+   float: left;
+   border: 1px solid #920900;
+   width: 52%;
+   height: 100%;
+}
+
+/* table latlon */
+
+#latlon {
+   margin-left: 570px;
+}
+
+table.latlon {
+   margin-top: 20px;
+   padding: 0px;
+   border: 1px solid #920900;
+   background-color: #F1EEE8;
+}
+
+table.latlon th, table.latlon td {
+   padding: 5px;
+}
+
+table.latlon th {
+   text-align: left;
+   width: 120px;
+   color: #2f2f2f;
+   font-weight: normal;
+   font-size: 0.8em;
+}
+
+table.latlon input {
+   width: 80px;
+}
+
+
+
+/* header, footer, content overwrites default styles */
+
+#content {
+   clear: both;
+   margin: 0px 80px 0px 80px;
+   padding: 0px;
+   height: 450px;
+}
+
+
+
+/* header */
+#header {
+  background-repeat: repeat-x;
+  padding: 0px 80px;
+  height: 75px;
+  min-width: 600px;
+}
+
+#header div.nav {
+   float: right;
+   text-align: right;
+}
+
+#header div.nav ul {
+   margin-top: 20px;
+   list-style-type: none;
+}
+
+#header div.nav ul li {
+   display:inline;
+   padding-left: 12px;
+   font-size: 1.2em;
+}
+
+#header div.nav ul li a {
+   text-decoration: none;
+   color: #fff;
+}
+
+#header div.nav ul li a:hover {
+   text-decoration: underline;
+}
+
+#header div.nav ul li span.inactive {
+   color: #ccc;
+}
+
+#header div.nav ul li img {
+   width: 40px;
+   height: 40px;
+}
+
+
+#header div.logo {
+   width: 350px;
+   float: left;
+   padding: 10px 0px 0px 0px;
+}
+
+#header div.logo img.logo {
+   float: left;
+   vertical-align: middle;
+   margin: 1px;
+   margin-right: 20px;
+}
+
+#header div.logo h1 {
+   margin: 0px;
+   font-family: serif;
+   font-weight: normal;
+   text-shadow: #000 1px 1px 1px; font-size: 28px; color: #fff;
+}
+
+/* switch language */
+#switch_language {
+   float: right;
+   margin: 0px 80px 0px 0px;
+}
+
+/* footer */
+#footer {
+   clear: both;
+   margin-top: 40px;
+   padding: 20px 80px 20px 80px;
+   background-color: #474E59;
+   border-top: 5px solid #940903;
+}
+
+#footer p {
+   color: #fff;
+   font-size: .8em;
+}
+
+#footer div.imp {
+   border-top: 1px solid #ffffff;
+}
+
+
+#footer_account, #footer_expert, #footer_useradmin {
+   float: left;
+   margin: 0px 10px 10px 0px;
+   padding: 5px;
+   width: 220px;
+   border-radius: 4px;
+}
+
+#footer_account h4, #footer_expert h4, #footer_useradmin h4{
+   font-size: 14px;
+   color: #fff;
+   margin: 0px 0px 20px 0px;
+}
+
+#footer_account a, #footer_expert a, #footer_useradmin a{
+   color: #fff;
+   font-size: 12px;
+}
+
+#footer select {
+   margin-left: 10px;
+   font-size: 12px;
+   font-weight: bold;
+   color: #940903;
+}
+
+#footer option {
+   width: 30px;
+}
+
+/* pagination */
+div.pagination {
+   margin-top: 30px;
+   font-size: 0.8em;
+}
+
+
+/* error messages */
+#error_explanation {
+   width: 500px;
+   border: 1px solid #B3232C;
+   margin: 20px 0px;
+   background-color: #f0f0f0;
+}
+
+#error_explanation h2 {
+   margin: 0px;
+   padding: 5px 10px;
+   font-size: 0.9em;
+   font-weight: normal;
+   color: #B3232C;
+}
+
+#error_explanation ul li, #error_explanation p {
+   font-size: .8em;
+   padding: 2px 10px;
+}
+
+#error_explanation ul li {
+   margin-left: 20px;
+   list-style: square;
+}
+
+
+div.flash {
+   padding: 2px 10px;
+}
+
+div.success, div.notice {
+   border: 2px solid #B9FFA2;
+   background-color: #B9FFA2;
+}
+
+div.error, div.alert {
+   border: 2px solid #e4c7dd;
+   background-color: #e4c7dd;
+}
+
+input.error { border: 1px solid red; }
+
+.error {
+   color: red;
+   padding-left: 0px;
+   margin-left: 10px;
+}
+
+div.field_with_errors label.message {
+   color: red;
+   padding-left: 0px;
+   margin-left: 10px;
+   font-size: 0.8em;
+}

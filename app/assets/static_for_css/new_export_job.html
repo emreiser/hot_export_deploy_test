@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<!-- saved from url=(0036)http://localhost:3000/en/wizard_area -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>Hot Exports | New Export Job</title>
+  <link rel="shortcut icon" type="image/x-icon" href="http://localhost:3000/assets/layout/favicon.ico">
+  <link href="../stylesheets/application.css" media="screen" rel="stylesheet" type="text/css">
+<link href="../stylesheets/basic.css" media="screen" rel="stylesheet" type="text/css">
+<link href="./new_export_job_files/jobs.css" media="screen" rel="stylesheet" type="text/css">
+<link href="./new_export_job_files/pages.css" media="screen" rel="stylesheet" type="text/css">
+<link href="./new_export_job_files/tag.css" media="screen" rel="stylesheet" type="text/css">
+<link href="./new_export_job_files/uploads.css" media="screen" rel="stylesheet" type="text/css">
+<link href="./new_export_job_files/user.css" media="screen" rel="stylesheet" type="text/css">
+  <script type="text/javascript" defer="" async="" src="../javascripts/piwik.js"></script><script src="./new_export_job_files/jquery.js" type="text/javascript"></script><style type="text/css"></style>
+<script src="../javascripts/jquery_ujs.js" type="text/javascript"></script>
+<script src="../javascripts/jobs.js" type="text/javascript"></script>
+<script src="../javascripts/pages.js" type="text/javascript"></script>
+<script src="../javascripts/rails.validations.js" type="text/javascript"></script>
+<script src="../javascripts/tag.js" type="text/javascript"></script>
+<script src="../javascripts/uploads.js" type="text/javascript"></script>
+<script src="../javascripts/user.js" type="text/javascript"></script>
+<script src="../javascripts/application.js" type="text/javascript"></script>
+<script src="../javascripts/rails.validations.js" type="text/javascript"></script>
+  <meta content="authenticity_token" name="csrf-param">
+<meta content="Ql5BOiHLHlFbVCP8hLKvMFCdkSiHjfBhNOPI1jhz6N8=" name="csrf-token">
+</head>
+<body>
+<div id="header" style="background-image: url(../images/layout/red-header.png);">
+   <div class="nav">
+      <ul>
+         <li><a href="http://localhost:3000/en">Home</a></li>
+         <li><a href="http://localhost:3000/en/help">Aide</a></li>
+         <li><a href="http://localhost:3000/en/jobs">Tâches</a></li>
+
+         <li><a href="./new_export_job_files/new_export_job.html">Nouvelle tâche</a></li>
+
+
+      </ul>
+   </div>
+   <div class="logo">
+      <img src="./new_export_job_files/hot_logo_white.png" class="logo">
+      <h1>HOT Exports</h1>
+   </div>
+</div>
+
+<div id="switch_language" style="float: right;">
+<p>
+<a href="http://localhost:3000/id/wizard_area">Bahasa Indonesia</a>
+|
+<a href="http://localhost:3000/de/wizard_area">Deutsch</a>
+|
+English
+|
+<a href="http://localhost:3000/es/wizard_area">Español</a>
+|
+<a href="http://localhost:3000/fr/wizard_area">Français</a>
+|
+<a href="http://localhost:3000/ja/wizard_area">日本語</a>
+</p>
+</div>
+
+<div id="content">
+   <link type="text/css" rel="stylesheet" href="./new_export_job_files/leaflet.css">
+<script type="text/javascript" src="./new_export_job_files/leaflet.js"></script>
+
+<link type="text/css" rel="stylesheet" href="./new_export_job_files/leaflet.draw.css">
+<script type="text/javascript" src="./new_export_job_files/leaflet.draw.js"></script>
+
+<script type="text/javascript" src="./new_export_job_files/leaflet-omnivore.min.js"></script>
+
+<script type="text/javascript">
+$(document).ready(function() {
+
+   // map
+   var map;
+   var mapnik_layer;
+   var regions_layer;
+   var check_layer;
+
+   var vectors;
+   var box;
+
+   var mapMessage = "";
+
+   init_map();
+
+   $(".select_area").click(function(e) {
+      e.preventDefault();//dont jump to top of page
+      init_drawfeature();
+      start_drawfeature();
+   });
+
+   $(".latlon").change(function() {
+      init_drawfeature();
+      values2box();
+      map.removeControl(box);
+   });
+
+
+
+
+function init_map(){
+   map = new L.Map("map");
+   $('.leaflet-control-attribution').html('Data &copy; 2014 OpenStreetMap contributors');
+
+   mapnik_layer = L.tileLayer('http://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png');
+   map.addLayer(mapnik_layer);
+
+
+   regions_layer = omnivore.kml('/kml/loch.kml').addTo(map);
+   regions_layer.on('ready', function() {
+     regions_layer.setStyle(function(feature){
+       return { fillOpacity: 0.3, fillColor: "#f00", color: "#f00", weight: 2, clickable: false, pointerEvents: null };
+     });
+   });
+
+   // check_layer is not an actual visual layer?
+   // appears to be areas which are ok to downlaod
+   check_layer = omnivore.kml('/kml/check.kml');
+
+   map.setView(new L.LatLng(0,0), 1);
+
+
+   updateMapMessage('No area selected. Zoom in then click &#x27;Select Area&#x27;');
+}
+
+function init_drawfeature() {
+
+
+   if (vectors) {
+     vectors.clearLayers();
+   }
+   else{
+     vectors = new L.FeatureGroup();
+     map.addLayer(vectors);
+   }
+
+   box = new L.Control.Draw({
+     draw: {
+       polyline: false,
+       polygon: false,
+       circle: false,
+       marker: false
+     },
+     edit: {
+       featureGroup: vectors
+     }
+   });
+   map.on('draw:created', draw_end);
+}
+
+function start_drawfeature() {
+   map.addControl(box);
+   updateMapMessage('Drag to select an area');
+   $("p#select_area").css({"visibility":"hidden"});
+}
+
+function transformComplete(event) {
+   set_bounds(event.feature.geometry.bounds);
+}
+
+function draw_end(bbox) {
+   bounds = bbox.layer;
+   draw_box(bounds);
+   set_bounds(bounds.getBounds());
+   map.removeControl(box);
+   $("p#select_area").css({"visibility":"visible"});
+}
+
+function draw_box(bounds) {
+  vectors.clearLayers();
+  vectors.addLayer(bounds);
+}
+
+
+function set_bounds(bounds) {
+
+   if (!check_bounds(bounds)) {
+      return false;
+   }
+
+   z = 4;
+
+   var left    = bounds.getSouthWest().lng.toFixed(4);
+   var bottom  = bounds.getSouthWest().lat.toFixed(4);
+   var right   = bounds.getNorthEast().lng.toFixed(4);
+   var top     = bounds.getNorthEast().lat.toFixed(4);
+
+   $("#job_lonmin").val(left);
+   $("#job_latmin").val(bottom);
+   $("#job_lonmax").val(right);
+   $("#job_latmax").val(top);
+   $("form").resetClientSideValidations();
+}
+
+function init_values2box() {
+
+}
+
+function values2box() {
+
+   xminlon = $("#job_lonmin").val();
+   xminlat = $("#job_latmin").val();
+   xmaxlon = $("#job_lonmax").val();
+   xmaxlat = $("#job_latmax").val();
+
+   bounds = new L.LatLngBounds(
+     new L.LatLng(xminlat, xminlon),
+     new L.LatLng(xmaxlat, xmaxlon)
+   );
+   draw_box(bounds);
+   $("form").resetClientSideValidations();
+}
+
+function check_bounds(bounds) {
+
+   var covered_region = {}; //check_layer.features[0].geometry.intersects(poly);
+
+   var max_bounds_area = 100 / 1000;
+   var area = (bounds.getNorthEast().lat - bounds.getSouthWest().lat)
+      * (bounds.getNorthEast().lng - bounds.getSouthWest().lng);
+
+   $("a.select_area").text('Select a different area');
+
+   if (!covered_region) {
+      //Area is out of the covered regions
+      updateMapMessage('<span class="error">Selected area is not covered by the service!</span>');
+      return false;
+   } else if (area > max_bounds_area) {
+      //Area is too large
+      updateMapMessage('<span class="error">Selected Area is too large: ' + parseInt(area) + ' - Only 100 is allowed.</span>');
+      return false;
+   } else {
+      //All ok
+      updateMapMessage('&nbsp;');
+      return true;
+   }
+}
+
+function updateMapMessage(msg) {
+   mapMessage = msg
+   $("#mapmessage").html(mapMessage);
+}
+
+$("form#new_job").submit(function() {
+   //Extra validation, in addition to the standard stuff from the
+   //validation plugin.
+   if (mapMessage!="" && mapMessage!="&nbsp;") {
+      alert( mapMessage );
+      return false
+   } else {
+      return true;
+   }
+});
+
+});
+</script>
+
+<div class="wizard">
+   <h1>New Export Job</h1>
+
+   <form accept-charset="UTF-8" action="http://localhost:3000/en/wizard_configuration" class="new_job" data-validate="true" id="new_job" method="post" novalidate="novalidate"><div style="margin:0;padding:0;display:inline"><input name="utf8" type="hidden" value="✓"><input name="authenticity_token" type="hidden" value="Ql5BOiHLHlFbVCP8hLKvMFCdkSiHjfBhNOPI1jhz6N8="></div>
+
+   <input id="old_job_id" name="old_job_id" type="hidden">
+   
+
+
+<!--
+      <tr>
+         <th><label for="job_region">Region</label></th>
+         <th><select class="change_project" id="job_region_id" name="job[region_id]"></select></th>
+      </tr>
+//-->
+    <div>
+      <label for="job_name">Name</label>
+      <input id="job_name" name="job[name]" size="30" style="width: 320px;" type="text" data-validate="true">
+    </div>
+    <div>
+      <label for="job_description">Description</label>
+      <textarea cols="40" id="job_description" name="job[description]" rows="20" style="width: 500px;" data-validate="true"></textarea>
+    </div>
+    <div>
+      <label for="job_preset">Tags/Preset File</label>
+      <select id="uploads_presetfile" name="uploads[presetfile]" data-validate="true"><option value="0" selected="selected">No File</option></select>
+    </div>
+    <div>
+      <label for="job_preset">Translation File</label>
+      <select id="uploads_translation" name="uploads[translation]" data-validate="true"><option value="0" selected="selected">No File</option></select>
+    </div>
+    <div>
+      <label for="job_preset">Tag Transform SQL File</label>
+      <ul>
+      </ul>
+    </div>
+    <div>
+      <div id="mapmessage">No area selected. Zoom in then click 'Select Area'</div>
+      <img src="./new_export_job_files/Pointer.png" style="width:20px;" class="select_area">
+      <a href="http://localhost:3000/en/wizard_area#" class="select_area">
+        Select Area
+      </a>
+
+      <input id="job_lonmin" name="job[lonmin]" type="hidden">
+      <input id="job_latmin" name="job[latmin]" type="hidden">
+      <input id="job_lonmax" name="job[lonmax]" type="hidden">
+      <input id="job_latmax" name="job[latmax]" type="hidden">
+   </div>
+   <div style="text-align:center;">
+      <input class="submit" name="commit" type="submit" value="Create Job">
+   </div>
+
+</form><script>//<![CDATA[
+if(window.ClientSideValidations===undefined)window.ClientSideValidations={};window.ClientSideValidations.disabled_validators=[];window.ClientSideValidations.number_format={"separator":".","delimiter":","};if(window.ClientSideValidations.patterns===undefined)window.ClientSideValidations.patterns = {};window.ClientSideValidations.patterns.numericality=/^(-|\+)?(?:\d+|\d{1,3}(?:\,\d{3})+)(?:\.\d*)?$/;if(window.ClientSideValidations.forms===undefined)window.ClientSideValidations.forms={};window.ClientSideValidations.forms['new_job'] = {"type":"ActionView::Helpers::FormBuilder","input_tag":"<div class=\"field_with_errors\"><span id=\"input_tag\" /><label for=\"\" class=\"message\"></label></div>","label_tag":"<div class=\"field_with_errors\"><label id=\"label_tag\" /></div>","validators":{"job[name]":{"presence":[{"message":"can't be blank"}],"length":[{"messages":{"maximum":"is too long (maximum is 256 characters)"},"maximum":256}]}}};
+//]]></script></div>
+
+<div id="map" class="leaflet-container leaflet-fade-anim" tabindex="0" style="position: relative;"><div class="leaflet-map-pane" style="-webkit-transform: translate3d(69px, 0px, 0px);"><div class="leaflet-tile-pane"><div class="leaflet-layer"><div class="leaflet-tile-container"></div><div class="leaflet-tile-container leaflet-zoom-animated"><img class="leaflet-tile leaflet-tile-loaded" src="./new_export_job_files/0.png" style="height: 256px; width: 256px; left: -10px; top: -31px;"><img class="leaflet-tile leaflet-tile-loaded" src="./new_export_job_files/0(1).png" style="height: 256px; width: 256px; left: 246px; top: -31px;"><img class="leaflet-tile leaflet-tile-loaded" src="./new_export_job_files/1.png" style="height: 256px; width: 256px; left: -10px; top: 225px;"><img class="leaflet-tile leaflet-tile-loaded" src="./new_export_job_files/1(1).png" style="height: 256px; width: 256px; left: 246px; top: 225px;"><img class="leaflet-tile leaflet-tile-loaded" src="./new_export_job_files/0(1).png" style="height: 256px; width: 256px; left: -266px; top: -31px;"><img class="leaflet-tile leaflet-tile-loaded" src="./new_export_job_files/0.png" style="height: 256px; width: 256px; left: 502px; top: -31px;"><img class="leaflet-tile leaflet-tile-loaded" src="./new_export_job_files/1(1).png" style="height: 256px; width: 256px; left: -266px; top: 225px;"><img class="leaflet-tile leaflet-tile-loaded" src="./new_export_job_files/1.png" style="height: 256px; width: 256px; left: 502px; top: 225px;"></div></div></div><div class="leaflet-objects-pane"><div class="leaflet-shadow-pane"></div><div class="leaflet-overlay-pane"><svg class="leaflet-zoom-animated" width="1138" height="813" viewBox="-323 -182 1138 813" style="-webkit-transform: translate3d(-323px, -182px, 0px);"><g><path stroke-linejoin="round" stroke-linecap="round" fill-rule="evenodd" stroke="#f00" stroke-opacity="0.5" stroke-width="2" fill="#f00" fill-opacity="0.3" class="leaflet-clickable" d="M502 -30L-10 -30L-10 480L502 480zM271 171L255 166L202 179L227 280L322 280L334 238L319 207L309 208L303 201L295 185L295 178zM160 211L158 211L158 209L150 209L133 203L122 191L133 190L133 183L148 186L166 202zM300 193L281 193L281 177L284 170L281 161L287 158L304 159L303 156L310 143L316 136L347 128L372 142L371 148L353 168L358 171L353 173L354 178L347 185L348 192L332 193L326 201L308 208zM382 210L377 195L378 190L376 191L378 188L374 188L374 186L372 186L371 189L373 195L359 212L358 218L392 237L421 242L434 237L447 239L447 229L426 218L411 219L408 223L403 224L389 221zM412 203L410 214L414 215L416 217L415 219L428 217L422 194L417 195z"></path></g></svg></div><div class="leaflet-marker-pane"></div><div class="leaflet-popup-pane"></div></div></div><div class="leaflet-control-container"><div class="leaflet-top leaflet-left"><div class="leaflet-control-zoom leaflet-bar leaflet-control"><a class="leaflet-control-zoom-in" href="http://localhost:3000/en/wizard_area#" title="Zoom in">+</a><a class="leaflet-control-zoom-out" href="http://localhost:3000/en/wizard_area#" title="Zoom out">-</a></div></div><div class="leaflet-top leaflet-right"></div><div class="leaflet-bottom leaflet-left"></div><div class="leaflet-bottom leaflet-right"><div class="leaflet-control-attribution leaflet-control">Data © 2014 OpenStreetMap contributors</div></div></div></div>
+
+</div>
+<div id="footer">
+
+<div id="footer_account">
+<h4>Votre compte</h4>
+
+<p>Vous êtes connecté(e) sur le compte <br>
+<b>ck20@geofabrik.de</b>.
+</p>
+
+<ul>
+   <li>
+      <img src="./new_export_job_files/new.png">
+      <a href="http://localhost:3000/en/users/sign_out" data-method="delete" rel="nofollow">Logout</a>
+   </li>
+
+   <li>
+      <img src="./new_export_job_files/new.png">
+      <a href="http://localhost:3000/en/users/edit">Edit Profile</a>
+   </li>
+
+</ul>
+</div>
+
+<div id="footer_expert">
+<h4>Fonctions avancées</h4>
+<ul>
+<li>
+   <img src="./new_export_job_files/view.png">
+   <a href="http://localhost:3000/en/uploads/presets" title="Configuration files that define the data downloaded.">Preset Files</a>
+</li>
+<li>
+   <img src="./new_export_job_files/view.png">
+   <a href="http://localhost:3000/en/uploads/tagtransforms" title="Defines translation of the data schema for the download.">Tag Transform SQL Files</a>
+</li>
+<li>
+   <img src="./new_export_job_files/view.png">
+   <a href="http://localhost:3000/en/uploads/translations" title="Look-up tables to translate data from English into another language.">Translation Files</a>
+</li>
+
+<li>
+   <img src="./new_export_job_files/new.png">
+   <a href="http://localhost:3000/en/uploads/new">New Upload</a>
+</li>
+
+<!-- Visual Tag Chooser //-->
+<li>
+   <img src="./new_export_job_files/new.png">
+   <a href="http://visualtags.hotosm.org/" title="Application de Choix Visuel pour créer des modèles d&#39;attributs.">Choix Visuel d'Attributs</a>
+</li>
+</ul>
+</div>
+
+
+<div class="imp" style="clear:both;">
+<p style="clear:both; font-style: italic;">
+Copyright © 2013 Humanitarian OpenStreetMap Team · Données OpenStreetMap, licence ODbL 1.0
+</p></div>
+
+</div>
+
+<!-- Piwik -->
+<script type="text/javascript">
+  var _paq = _paq || [];
+  _paq.push(["trackPageView"]);
+  _paq.push(["enableLinkTracking"]);
+
+  (function() {
+    var u=(("https:" == document.location.protocol) ? "https" : "http") + "://piwik.hotosm.org/";
+    _paq.push(["setTrackerUrl", u+"piwik.php"]);
+    _paq.push(["setSiteId", "1"]);
+    var d=document, g=d.createElement("script"), s=d.getElementsByTagName("script")[0]; g.type="text/javascript";
+    g.defer=true; g.async=true; g.src=u+"piwik.js"; s.parentNode.insertBefore(g,s);
+  })();
+</script>
+<!-- End Piwik Code -->
+
+<pre class="debug_dump">--- !ruby/hash:ActiveSupport::HashWithIndifferentAccess
+controller: jobs
+action: wizard_area
+locale: en
+</pre>
+
+
+<script id="hiddenlpsubmitdiv" style="display: none;"></script><script>try{for(var lastpass_iter=0; lastpass_iter < document.forms.length; lastpass_iter++){ var lastpass_f = document.forms[lastpass_iter]; if(typeof(lastpass_f.lpsubmitorig2)=="undefined"){ lastpass_f.lpsubmitorig2 = lastpass_f.submit; lastpass_f.submit = function(){ var form=this; var customEvent = document.createEvent("Event"); customEvent.initEvent("lpCustomEvent", true, true); var d = document.getElementById("hiddenlpsubmitdiv"); if (d) {for(var i = 0; i < document.forms.length; i++){ if(document.forms[i]==form){ d.innerText=i; } } d.dispatchEvent(customEvent); }form.lpsubmitorig2(); } } }}catch(e){}</script></body></html>

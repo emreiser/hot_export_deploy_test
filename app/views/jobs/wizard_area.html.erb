@@ -1,0 +1,308 @@
+<link type="text/css" rel="stylesheet" href="<%= asset_path 'leaflet-0.7.2/leaflet.css' %>"></script>
+<script type="text/javascript" src="<%= asset_path 'leaflet-0.7.2/leaflet.js' %>"></script>
+
+<link type="text/css" rel="stylesheet" href="<%= asset_path 'leaflet-draw-0.2.4/leaflet.draw.css' %>"></script>
+<script type="text/javascript" src="<%= asset_path 'leaflet-draw-0.2.4/leaflet.draw.js' %>"></script>
+
+<script type="text/javascript" src="<%= asset_path 'leaflet-omnivore/leaflet-omnivore.min.js' %>"></script>
+
+<script type="text/javascript">
+$(document).ready(function() {
+
+  //map intro box
+  var closeBox = function(event){
+    $(event.target).parent().hide();
+  };
+
+  $(".close").bind("click", closeBox);
+
+   // map
+   var map;
+   var mapnik_layer;
+   var regions_layer;
+   var check_layer;
+
+   var vectors;
+   var box;
+
+   var mapMessage = "";
+
+   init_map();
+
+   $(".select_area").click(function(e) {
+      e.preventDefault();//dont jump to top of page
+      init_drawfeature();
+      start_drawfeature();
+   });
+
+   $(".latlon").change(function() {
+      init_drawfeature();
+      values2box();
+      map.removeControl(box);
+   });
+
+
+<% if @job.id.nil? %>
+<% else %>
+   // XXX check for "newwithconfiguration"
+   init_drawfeature();
+   box.deactivate();
+   transform.deactivate();
+   init_values2box();
+<% end %>
+
+
+function init_map(){
+   map = new L.Map("map");
+   $('.leaflet-control-attribution').html('Data &copy; 2014 OpenStreetMap contributors');
+
+   mapnik_layer = L.tileLayer('http://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png');
+   map.addLayer(mapnik_layer);
+
+
+   regions_layer = omnivore.kml('/kml/loch.kml').addTo(map);
+   regions_layer.on('ready', function() {
+     regions_layer.setStyle(function(feature){
+       return { fillOpacity: 0.3, fillColor: "#f00", color: "#f00", weight: 2, clickable: false, pointerEvents: null };
+     });
+   });
+
+   // check_layer is not an actual visual layer?
+   // appears to be areas which are ok to downlaod
+   check_layer = omnivore.kml('/kml/check.kml');
+
+<% if @job.id.nil? %>
+   map.setView(new L.LatLng(0,0), 1);
+<% else %>
+
+   extent = new L.LatLngBounds(
+     new L.LatLng(<%= @job.latmin %>, <%= @job.lonmin %>),
+     new L.LatLng(<%= @job.lonmax %>, <%= @job.latmax %>)
+   );
+   map.fitBounds(extent.pad(0.5))
+<% end %>
+
+
+   updateMapMessage('<%=t('jobs.area.no_area_selected')%>');
+}
+
+function init_drawfeature() {
+
+
+   if (vectors) {
+     vectors.clearLayers();
+   }
+   else{
+     vectors = new L.FeatureGroup();
+     map.addLayer(vectors);
+   }
+
+   box = new L.Control.Draw({
+     draw: {
+       polyline: false,
+       polygon: false,
+       circle: false,
+       marker: false
+     },
+     edit: {
+       featureGroup: vectors
+     }
+   });
+   map.on('draw:created', draw_end);
+}
+
+function start_drawfeature() {
+   map.addControl(box);
+   updateMapMessage('<%=t('jobs.area.drag_to_select')%>');
+   $("p#select_area").css({"visibility":"hidden"});
+}
+
+function transformComplete(event) {
+   set_bounds(event.feature.geometry.bounds);
+}
+
+function draw_end(bbox) {
+   bounds = bbox.layer;
+   draw_box(bounds);
+   set_bounds(bounds.getBounds());
+   map.removeControl(box);
+   $("p#select_area").css({"visibility":"visible"});
+}
+
+function draw_box(bounds) {
+  vectors.clearLayers();
+  vectors.addLayer(bounds);
+}
+
+
+function set_bounds(bounds) {
+
+   if (!check_bounds(bounds)) {
+      return false;
+   }
+
+   z = 4;
+
+   var left    = bounds.getSouthWest().lng.toFixed(4);
+   var bottom  = bounds.getSouthWest().lat.toFixed(4);
+   var right   = bounds.getNorthEast().lng.toFixed(4);
+   var top     = bounds.getNorthEast().lat.toFixed(4);
+
+   $("#job_lonmin").val(left);
+   $("#job_latmin").val(bottom);
+   $("#job_lonmax").val(right);
+   $("#job_latmax").val(top);
+   $("form").resetClientSideValidations();
+}
+
+function init_values2box() {
+
+   <% unless @job.id.nil? %>
+   xminlon = <%= @job.lonmin %>;
+   xminlat = <%= @job.latmin %>;
+   xmaxlon = <%= @job.lonmax %>;
+   xmaxlat = <%= @job.latmax %>;
+
+   bounds = new L.LatLngBounds(
+     new L.LatLng(xminlat, xminlon),
+     new L.LatLng(xmaxlat, xmaxlon)
+   );
+   draw_box(bounds);
+   <% end %>
+}
+
+function values2box() {
+
+   xminlon = $("#job_lonmin").val();
+   xminlat = $("#job_latmin").val();
+   xmaxlon = $("#job_lonmax").val();
+   xmaxlat = $("#job_latmax").val();
+
+   bounds = new L.LatLngBounds(
+     new L.LatLng(xminlat, xminlon),
+     new L.LatLng(xmaxlat, xmaxlon)
+   );
+   draw_box(bounds);
+   $("form").resetClientSideValidations();
+}
+
+function check_bounds(bounds) {
+
+   var covered_region = {}; //check_layer.features[0].geometry.intersects(poly);
+
+   var max_bounds_area = <%= @max_bounds_area.to_s %> / 1000;
+   var area = (bounds.getNorthEast().lat - bounds.getSouthWest().lat)
+      * (bounds.getNorthEast().lng - bounds.getSouthWest().lng);
+
+   $("a.select_area").text('<%=t('jobs.area.select_different') %>');
+
+   if (!covered_region) {
+      //Area is out of the covered regions
+      updateMapMessage('<span class="error"><%= t('jobs.errors.area_not_covered') %></span>');
+      return false;
+   } else if (area > max_bounds_area) {
+      //Area is too large
+      updateMapMessage('<span class="error"><%= t('jobs.errors.area_too_large') %>' + parseInt(area) + '<%= t('jobs.errors.bb_only_allowed', :bbox_max => @max_bounds_area.to_s) %></span>');
+      return false;
+   } else {
+      //All ok
+      updateMapMessage('&nbsp;');
+      return true;
+   }
+}
+
+function updateMapMessage(msg) {
+   mapMessage = msg
+   $("#mapmessage").html(mapMessage);
+}
+
+$("form#new_job").submit(function() {
+   //Extra validation, in addition to the standard stuff from the
+   //validation plugin.
+   if (mapMessage!="" && mapMessage!="&nbsp;") {
+      alert( mapMessage );
+      return false
+   } else {
+      return true;
+   }
+});
+
+});
+</script>
+
+<div id="info-panel">
+ <h1><%= @h1 %></h1>
+ <div class="wizard">
+    <%= form_for @job, :validate => true,
+                       :url => { action: @action }  do |f| %>
+
+       <%= hidden_field_tag(:old_job_id, @job.id) %>
+       <%= render 'shared/error_messages' %>
+
+       <%= f.label :name, t('jobs.th.name') %>
+       <%= f.text_field :name %>
+       <%= f.label :description, t('jobs.th.description') %>
+       <%= f.text_area :description %>
+
+       <div class="export-option">
+          <div class="option">
+             <p><%= t 'jobs.newjobconf.th.preset' %></p>
+             <%= select_tag('uploads[presetfile]', options_for_select(@upfiles['preset'], :selected => 0)) %>
+          </div>
+          <div class="hint">(hint)</div>
+       </div>
+
+       <div class="export-option">
+          <div class="option">
+             <p><%= t 'jobs.newjobconf.th.default_tags' %></p>
+             <%= check_box_tag('uploads[default_tags]', true, true) %>
+          </div>
+          <div class="hint">(hint)</div>
+       </div>
+
+       <div class="export-option">
+          <div class="option">
+             <p><%= t 'jobs.newjobconf.th.translation' %></p>
+             <%= select_tag('uploads[translation]', options_for_select(@upfiles['translation'], :selected => 0)) %>
+          </div>
+          <div class="hint">(hint)</div>
+       </div>
+
+       <div class="export-option">
+          <p><%= t 'jobs.newjobconf.th.transform' %></p>
+       </div>
+
+       <%= f.hidden_field(:lonmin) %>
+       <%= f.hidden_field(:latmin) %>
+       <%= f.hidden_field(:lonmax) %>
+       <%= f.hidden_field(:latmax) %>
+
+       <%= f.submit t('jobs.button.createjob'), :class=>'btn submit' %>
+    <% end %>
+   </div>
+</div>
+
+<div id="map-panel">
+   <div id="mapmessage">&nsbp;</div>
+   <p id="select_area"><img src="/assets/Pointer.png" style="width:20px;" class="select_area"><a href="#" class="select_area"><%= t 'jobs.action.select_area' %></a></p>
+   <div id="map">
+     <div id="intro-box">
+      <span class="glyphicon glyphicon-remove-circle close"></span>
+      <h2><%= t 'home.about.title' %></h2>
+      <p><%= t 'home.about.text' %></p>
+
+      <h2><%= t 'home.get_started.title' %></h2>
+      <ul>
+        <li><%= t 'home.get_started.text1' %></li>
+        <li><%= t 'home.get_started.text2' %></li>
+        <li><%= t 'home.get_started.text3' %></li>
+        <li><%= t 'home.get_started.text4' %></li>
+      </ul>
+
+      <h2><%= t 'home.note.title' %></h2>
+      <p><%= t 'home.note.text' %></p>
+
+     </div>
+   </div>
+
+</div>

@@ -1,0 +1,312 @@
+<script type="text/javascript" src="<%= asset_path 'OpenLayers-2.11/OpenLayers.js' %>"></script>
+<script type="text/javascript">
+$(document).ready(function() {
+
+   $("img.state").each(function() {
+      var state = $(this).attr('src');
+      if (state.match(/new/)) {
+         setInterval( "reloadRuns();", 30000 );
+      } else if (state.match(/running/)) {
+         setInterval( "reloadRuns();", 30000 );
+      }
+   });
+});
+
+   function reloadRuns() {
+      // window.location.reload();
+      
+      var html = "";
+      $.ajax({
+         url: "<%= reload_runs_path %>",
+         type: "post",
+         data: {"job_id" : <%= @job.id %>},
+         success: function(data) {
+
+            $("#reload_runs").empty(); 
+            $.each(data, function(index, run) {
+
+               var tr_line = $("<tr/>");
+
+               var img_src= '';
+               if (run.state == 'new')  {
+                  img_src = "<%= asset_path 'status/new.png' %>"   
+               } else if (run.state == 'running') {
+                  img_src = "<%= asset_path 'status/running.png' %>"   
+               } else if (run.state == 'success' ) {
+                  img_src = "<%= asset_path 'status/success.png' %>"   
+               } else {
+                  img_src = "<%= asset_path 'status/error.png' %>"   
+               }
+
+
+               // state
+               var td_state = $("<td/>");
+               var img_state = $("<img/>", {
+                  src:   img_src,
+                  title: "run.state",   
+                  class: "state"
+               });
+
+               img_state.appendTo(td_state);
+               td_state.appendTo(tr_line);
+
+               // download
+               var td_down  = $("<td/>");
+               var ul_down = $("<ul/>");
+               if (run.state == 'success') {
+
+                  for (i in run.downloads) {
+                     var li_down = $("<li/>");
+
+                     var a_down = $("<a/>", {
+                        href : run.downloads[i].url,
+                        text : run.downloads[i].name   
+                     });
+
+                     var span_down = $("<span/>", {
+                        class: 'size',
+                        text: " [" + run.downloads[i].size + "]"
+                     });
+
+                     a_down.appendTo(li_down);
+                     span_down.appendTo(li_down);
+                     li_down.appendTo(ul_down);
+                  }
+                  ul_down.appendTo(td_down);
+               } else if (run.state == 'new') {
+                  td_down.text('[job is running - no downloads available yet]');
+
+               } else if (run.state == 'running') {
+                  td_down.text('[job is running - no downloads available yet]');
+
+               } else if (run.state == 'error') {
+                  td_down.text(run.comment);   
+
+               } else {
+                  td_down.text('[no download available]');
+               }
+               td_down.appendTo(tr_line);
+
+               // created_at
+               // run.updated_at.strftime("%Y-%m-%d %H:%M")
+
+               bb = new Date(run.updated_at);
+               mm = FormatNumberLength((bb.getMonth() + 1),2);
+               var td_crat  = $("<td/>", {
+                  text: bb.getFullYear().toString() + '-' + 
+                        mm.toString() + '-' +
+                        bb.getDate().toString()     + ' ' +
+                        bb.getHours().toString()    + ':' +
+                        bb.getMinutes().toString() 
+               });
+               td_crat.appendTo(tr_line);
+
+               // created_by
+               if (run.user) {
+                  var td_crby = $("<td/>", {
+                     text: run.user.email
+                  });
+                  td_crby.appendTo(tr_line);
+               }
+
+               tr_line.appendTo($("#reload_runs"));
+            });
+
+         },
+         error: function() {
+            $("#reload_runs").html("<tr><td>ajax error</td></tr>");   
+         }
+      });
+   }
+
+   function FormatNumberLength(num, length) {
+      var r = "" + num;
+      while (r.length < length) {
+         r = "0" + r;
+      }
+      return r;
+   }
+
+
+</script>
+<script type="text/javascript">
+$(document).ready(function() {
+
+   var proj4326;
+   var projmerc;
+   var map;
+   var mapnik_layer;
+   var vectors;
+   var box;
+
+   init_map();
+   init_drawfeature();
+   init_values2box();
+
+});
+
+function init_map(){
+   proj4326 = new OpenLayers.Projection("EPSG:4326");
+   projmerc = new OpenLayers.Projection("EPSG:900913");
+
+   map = new OpenLayers.Map("map", {
+      controls: [
+         // new OpenLayers.Control.KeyboardDefaults(),
+         new OpenLayers.Control.Navigation(),
+         new OpenLayers.Control.ZoomPanel(),
+         new OpenLayers.Control.MousePosition()
+      ],
+      maxExtent:  new OpenLayers.Bounds(-20037508.34,-20037508.34,
+                                         20037508.34, 20037508.34),
+      numZoomLevels: 18,
+      maxResolution: 156543,
+      units: 'm',
+      projection: projmerc,
+      displayProjection: proj4326,
+      theme: "<%= asset_path 'OpenLayers-2.11/theme/default/style.css' %>"
+   } );
+
+   mapnik_layer = new OpenLayers.Layer.XYZ('OSM Mapnik', 'http://tile.openstreetmap.org/${z}/${x}/${y}.png'); /*, {
+      sphericalMercator: true
+   });*/
+   map.addLayers([mapnik_layer]);
+
+   extent = new OpenLayers.Bounds(<%= @job.lonmin %>, <%= @job.latmin %>, <%= @job.lonmax %>, <%= @job.latmax %>);
+   extent.transform(proj4326,projmerc);
+   map.zoomToExtent(extent.scale(2))
+}
+
+function init_drawfeature() {
+   vectors = new OpenLayers.Layer.Vector("Box");
+   map.addLayers([vectors]);
+
+   box = new OpenLayers.Control.DrawFeature(vectors, OpenLayers.Handler.RegularPolygon, { 
+      handlerOptions: {
+         sides: 4,
+         snapAngle: 90,
+         irregular: true,
+         persist: true
+      }
+   });
+   map.addControl(box);
+}
+
+function draw_box(bounds) {
+   var feature = new OpenLayers.Feature.Vector(bounds.toGeometry());
+   vectors.removeAllFeatures();
+   vectors.addFeatures(feature);
+}
+
+function init_values2box() {
+   bounds = new OpenLayers.Bounds(<%= @job.lonmin %>, <%= @job.latmin %>, <%= @job.lonmax %>, <%= @job.latmax %>);
+   bounds.transform(proj4326,projmerc);
+   draw_box(bounds);
+}
+
+</script>
+<h1><%= t 'jobs.job.h1' %> <i><%= @job.name %></i></h1>
+<p><%= simple_format(@job.description) %></p>
+
+<h2><%= t 'jobs.runs.h2' %></h2>
+<table class="jobindex">
+   <tr>
+   <th width="30"><%= t 'jobs.th.state' %></th>
+   <th width="520"><%= t 'jobs.th.download' %></th>
+   <th width="120"><%= t 'jobs.th.created_at' %></th>
+   <% if current_user.try(:admin?) %>
+      <th width="120"><%= t 'jobs.th.created_by' %></th>
+   <% end %>
+   </tr>
+   <tbody id="reload_runs">
+   <%= render @runs %>
+   </tbody>
+</table>
+
+<!-- Start New Run //-->
+<%= form_tag(newrun_path, :method => "post") do %>
+<%= hidden_field_tag("job_id", @job.id) %>
+<%= hidden_field_tag("locale", params[:locale]) %>
+<p><input type="submit" value="<%= t 'jobs.button.newrun' %>" name="commit"></p>
+<% end %>
+
+<!-- Area //-->
+<h2><%= t 'jobs.area.h2' %></h2>
+<div id="map"></div>
+
+<div id="latlon">
+<table class="latlon">
+<tr><th><%= t 'jobs.th.minlon' %></th><td id="job_lonmin"><%= @job.lonmin %></td></tr>
+<tr><th><%= t 'jobs.th.minlat' %></th><td id="job_latmin"><%= @job.latmin %></td></tr>
+<tr><th><%= t 'jobs.th.maxlon' %></th><td id="job_lonmax"><%= @job.lonmax %></td></tr>
+<tr><th><%= t 'jobs.th.maxlat' %></th><td id="job_latmax"><%= @job.latmax %></td></tr>
+</table>
+</div>
+
+
+<h2 style="clear: left; padding-top: 40px;"><%= t 'jobs.config.h2' %></h2>
+<table class="upindex">
+
+<!-- Preset //-->
+<tr>
+   <th><%= t 'jobs.th.preset' %></th>
+   <td>
+      <select>
+      <% @tags.each do |tag| %>
+         <option><%= tag.key %> [<%= tag.geometrytype %>]</option> 
+      <% end %>
+      </select>
+   </td>
+   <td>
+      <% if @job.presetfile == 'old' %>
+         <%= t 'jobs.based_upon.directly' %>
+      <% elsif @job.presetfile? %>
+         <%= @job.presetfile %>
+      <% else %>
+         <%= t 'jobs.based_upon.default_tags' %>
+      <% end %>
+   </td>
+</tr>
+
+<!-- Tag Transform //-->
+<tr>
+<th><%= t 'jobs.th.transform' %></th>
+<td></td>
+<td>
+<ul>
+<% @uploads.each do |up| %>
+<% if up.uptype == 'tagtransform' %>
+   <li><%= up.name %></li>
+<% end %>
+<% end %>
+</ul>
+</td>
+</tr>
+
+<!-- Translation //-->
+<tr>
+<th><%= t 'jobs.th.translate' %></th>
+<td></td>
+<td>
+<ul>
+<% @uploads.each do |up| %>
+   <% if up.uptype == 'translation' %>
+<li><%= up.name %></li>
+<% end %>
+<% end %>
+</ul>
+</td>
+</tr>
+</table>
+
+<!-- recycle job //-->
+<% if user_signed_in? %>
+   <h2><%= t 'jobs.recycle.h2' %></h2>
+   <p><%= t 'jobs.recycle.text' %></p>
+   <p>
+   <%= form_tag(newwithconfiguration_path, :method => "get") do %>
+   <%= hidden_field_tag("job_id", @job.id) %>
+   <%= hidden_field_tag("locale", params[:locale]) %>
+   <input type="submit" value="<%= t 'jobs.button.recyclejob' %>" name="commit">
+   <% end %>
+<% end %>
+</p>

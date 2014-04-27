@@ -1,0 +1,56 @@
+# Instructions
+
+## Install prerequisites
+
+Ruby, Ruby gems, PostgreSQL, and PostGIS
+
+## Create a PostreSQL database
+
+    initdb /path/to/empty/db/folder
+    postgres -D /path/to/empty/db/folder
+
+Keep PostgreSQL running for the rest of the commands and while you run the server.
+
+## Add users and database
+
+    sudo -u YOUR_LOCAL_USER createuser hot_export
+    sudo -u YOUR_LOCAL_USER createdb hot_export_development
+
+## Add PostGIS extenstions
+
+    psql hot_export_development
+    > CREATE EXTENSION postgis;
+    > CREATE EXTENSION postgis_topology;
+    > \q
+
+## Set up Rails server
+
+    bundle install
+    rake db:setup
+    rake db:migrate
+
+## Fix issues with translations
+
+Some translation files are not valid YML files. These sections are marked with a "fixme"
+
+## Create and confirm a user
+Load the Rails console
+
+    rails c
+
+If you are setting up the server without e-mail, create a user with a secure password.
+
+    user_admin = User.create!(
+      :email => "ck20@geofabrik.de",
+      :password => "abcabcabc",
+      :password_confirmation => "abcabcabc"
+    )
+
+Add a confirmation time.
+
+    user_admin.confirmed_at = Time.now
+    user_admin.save!
+
+## Run the Rails server
+
+    rails s
